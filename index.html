@@ -10,12 +10,30 @@
     }
 </style>
 <script>
+    getDomain = data => {
+        let a = document.createElement('a');
+        a.href = data;
+        return a.hostname;
+    }
+
+    let frame = document.querySelector('#frame');
     let searchParams = new URLSearchParams(window.location.search);
-    let url = searchParams.get('url');
+    let url = decodeURIComponent(searchParams.get('url'));
+    let domain = getDomain(url);
     let param = searchParams.get('param');
-    url = decodeURIComponent(url);
     if (param) {
         url += `&${param}=${document.domain}`;
     }
-    document.querySelector('#frame').src = url;
+
+    window.addEventListener('message', d => {
+        let data = JSON.parse(JSON.stringify(d.data));
+        if (d.origin.includes(domain) && parent != window) {
+            // if message came from frame
+            parent.postMessage(data, '*');
+        } else {
+            // message came from parent
+            frame.contentWindow.postMessage(data, '*');
+        }
+    });
+    frame.src = url;
 </script>
